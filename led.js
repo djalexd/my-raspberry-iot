@@ -2,7 +2,7 @@ const awsIot = require('aws-iot-device-sdk')
 const fs = require('fs')
 const gpio = require('rpi-gpio')
 
-const usageAndExit() => {
+const usageAndExit = () => {
   console.log(`Usage`)
   console.log(`\tnode led.js --config=<configuration file>`)
   process.exit(1)
@@ -17,12 +17,15 @@ if (!args.config) {
   console.log('Missing --config argument')
   usageAndExit()
 }
-if (!args.config.thingName) {
+
+const config = JSON.parse(fs.readFileSync(args.config, 'utf8'))
+
+if (!config.thingName) {
   console.log('Missing thingName from config file')
   usageAndExit()
 }
 
-if (!args.config.pin) {
+if (!config.pin) {
   console.log('Missing output pin from config file')
   usageAndExit()
 }
@@ -37,7 +40,7 @@ gpio.setup(pin, gpio.DIR_OUT, (err) => {
 })
 
 const thing = args.thingName
-const shadow = awsIot.thingShadow(JSON.parse(fs.readFileSync(args.config, 'utf8')))
+const shadow = awsIot.thingShadow(config)
 
 let clientTokenUpdate
 
