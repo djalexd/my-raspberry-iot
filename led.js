@@ -30,7 +30,23 @@ if (!config.pin) {
   usageAndExit()
 }
 
-const pin = parseInt(args.config.pin)
+const setup = (pin, dir) => {
+  return new Promise((resolve, reject) => {
+    gpio.setup(pin, dir, (err) => {
+      if (err) reject(err)
+      else resolve()
+    })
+  })
+}
+
+const write = (pin, state) => {
+  return new Promise((resolve, reject) => {
+    gpio.write(pin, state, (err) => {
+      if (err) reject(err)
+      else resolve()
+    })
+  })
+}
 
 const thing = args.thingName
 const shadow = awsIot.thingShadow(config)
@@ -60,14 +76,8 @@ shadow.on('status', (thingName, stat, clientToken, stateObject) => {
 shadow.on('delta', (thingName, stateObject) => {
   console.log(`received delta on ${thingName}: ${JSON.stringify(stateObject)}`)
   if (stateObject.state && stateObject.state.toggle) {
-
-    gpio.setup(pin, gpio.DIR_OUT, write)
-    const write = () => {
-      gpio.write(pin, stateObject.state.toggle === "on", (err) => {
-        if (err) throw err
-        console.log('Written to pin')
-      })
-    }
+    setup(config.pin, gpio.DIR_OUT)
+    .then(_ => write(config.pin, stateObject.state.toggle === "on"))
   }
 })
 
